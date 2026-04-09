@@ -7,7 +7,7 @@ class AppEnvironment {
     return const AppEnvironment(
       apiBaseUrl: String.fromEnvironment(
         'API_BASE_URL',
-        defaultValue: 'http://10.0.2.2:3000',
+        defaultValue: 'http://62.171.186.246:3000',
       ),
     );
   }

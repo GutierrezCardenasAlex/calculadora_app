@@ -22,6 +22,18 @@ class _LoginScreenState extends State<LoginScreen> {
   final _controller = TextEditingController();
   bool _isLoading = false;
   String? _error;
+  bool _showCard = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        _showCard = true;
+      });
+    });
+  }
 
   Future<void> _submit() async {
     final name = _controller.text.trim();
@@ -57,39 +69,76 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'Bienvenido',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Aprende matematicas jugando',
-            style: Theme.of(context).textTheme.headlineMedium,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Ingresa tu nombre para comenzar.',
-            style: Theme.of(context).textTheme.bodyLarge,
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _controller,
-            decoration: const InputDecoration(
-              labelText: 'Nombre',
-              border: OutlineInputBorder(),
+      child: Center(
+        child: AnimatedScale(
+          scale: _showCard ? 1 : 0.92,
+          duration: const Duration(milliseconds: 450),
+          curve: Curves.easeOutBack,
+          child: AnimatedOpacity(
+            opacity: _showCard ? 1 : 0,
+            duration: const Duration(milliseconds: 350),
+            child: Card(
+              elevation: 8,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(28),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      '123',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 42,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFF28C28),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Aprende matematicas jugando',
+                      style: Theme.of(context).textTheme.headlineMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Ingresa tu nombre para comenzar una aventura con numeros.',
+                      style: Theme.of(context).textTheme.bodyLarge,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        labelText: 'Nombre',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(_error!, style: const TextStyle(color: Colors.red)),
+                    ],
+                    const SizedBox(height: 20),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      child: FilledButton.icon(
+                        key: ValueKey(_isLoading),
+                        onPressed: _isLoading ? null : _submit,
+                        icon: Icon(
+                          _isLoading ? Icons.hourglass_top : Icons.play_arrow,
+                        ),
+                        label: Text(_isLoading ? 'Entrando...' : 'Entrar'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-          ],
-          const SizedBox(height: 20),
-          FilledButton(
-            onPressed: _isLoading ? null : _submit,
-            child: Text(_isLoading ? 'Entrando...' : 'Entrar'),
-          ),
-        ],
+        ),
       ),
     );
   }

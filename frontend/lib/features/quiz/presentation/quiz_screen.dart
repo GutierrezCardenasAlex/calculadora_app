@@ -30,6 +30,7 @@ class _QuizScreenState extends State<QuizScreen> {
   int _index = 0;
   int _hits = 0;
   dynamic _selectedOption;
+  bool? _lastAnswerCorrect;
 
   @override
   Widget build(BuildContext context) {
@@ -58,17 +59,68 @@ class _QuizScreenState extends State<QuizScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              LinearProgressIndicator(
+                value: (_index + 1) / questions.length,
+                minHeight: 12,
+                borderRadius: BorderRadius.circular(999),
+                backgroundColor: Colors.white,
+              ),
+              const SizedBox(height: 16),
               Text(
                 'Pregunta ${_index + 1} de ${questions.length}',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 20),
-              Text(
-                question.question,
-                style: Theme.of(context).textTheme.headlineSmall,
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (child, animation) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.15, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+                child: Container(
+                  key: ValueKey(question.id),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(24),
+                  ),
+                  child: Text(
+                    question.question,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               ),
               const SizedBox(height: 20),
               Expanded(child: _buildDynamicQuestion(question)),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                child: _lastAnswerCorrect == null
+                    ? const SizedBox(height: 24)
+                    : Container(
+                        key: ValueKey(_lastAnswerCorrect),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: _lastAnswerCorrect!
+                              ? const Color(0xFFD9F7BE)
+                              : const Color(0xFFFFD6D6),
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Text(
+                          _lastAnswerCorrect!
+                              ? 'Muy bien!'
+                              : 'Buen intento, sigue asi!',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+              ),
               FilledButton(
                 onPressed: _selectedOption == null
                     ? null
@@ -92,17 +144,44 @@ class _QuizScreenState extends State<QuizScreen> {
           itemBuilder: (context, index) {
             final option = question.options[index];
             final isSelected = _selectedOption == option;
-            return ChoiceChip(
-              label: SizedBox(
-                width: double.infinity,
-                child: Text(option.toString(), textAlign: TextAlign.center),
+            return AnimatedScale(
+              scale: isSelected ? 1.03 : 1,
+              duration: const Duration(milliseconds: 180),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: () {
+                  setState(() {
+                    _selectedOption = option;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 18,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFFFFD166)
+                        : Colors.white.withValues(alpha: 0.82),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFFF28C28)
+                          : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Text(
+                    option.toString(),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
               ),
-              selected: isSelected,
-              onSelected: (_) {
-                setState(() {
-                  _selectedOption = option;
-                });
-              },
             );
           },
         );
@@ -114,9 +193,14 @@ class _QuizScreenState extends State<QuizScreen> {
     List<Question> questions,
     Question question,
   ) async {
-    if (_selectedOption == question.correct) {
+    final wasCorrect = _selectedOption == question.correct;
+    if (wasCorrect) {
       _hits += 1;
     }
+
+    setState(() {
+      _lastAnswerCorrect = wasCorrect;
+    });
 
     if (_index == questions.length - 1) {
       final score = ((_hits / questions.length) * 100).round();
@@ -143,6 +227,7 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() {
       _index += 1;
       _selectedOption = null;
+      _lastAnswerCorrect = null;
     });
   }
 }

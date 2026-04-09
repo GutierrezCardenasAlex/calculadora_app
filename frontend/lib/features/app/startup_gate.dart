@@ -46,21 +46,16 @@ class _StartupGateState extends State<StartupGate> {
       setState(() {
         _config = config;
         _user = user;
+        _error = null;
       });
     } catch (_) {
-      final cachedConfig = widget.configRepository.getCachedConfig();
-      final cachedUser = widget.authRepository.getCachedUser();
       if (!mounted) return;
-      if (cachedConfig != null) {
-        setState(() {
-          _config = cachedConfig;
-          _user = cachedUser;
-        });
-      } else {
-        setState(() {
-          _error = 'No fue posible cargar la configuracion.';
-        });
-      }
+      setState(() {
+        _config = null;
+        _user = null;
+        _error =
+            'La app no esta en funcionamiento en este momento. Verifica que el servidor y la base de datos esten activos.';
+      });
     }
   }
 
@@ -68,7 +63,7 @@ class _StartupGateState extends State<StartupGate> {
   Widget build(BuildContext context) {
     if (_error != null) {
       return _StatusScreen(
-        title: 'Sin conexion',
+        title: 'Estamos preparando la experiencia',
         message: _error!,
         actionLabel: 'Reintentar',
         onPressed: _bootstrap,
