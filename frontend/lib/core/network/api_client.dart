@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -17,19 +18,36 @@ class ApiClient {
 
   final String baseUrl;
   final http.Client _client;
+  static const Duration _timeout = Duration(seconds: 6);
 
   Future<dynamic> get(String path) async {
-    final response = await _client.get(Uri.parse('$baseUrl$path'));
-    return _decodeResponse(response);
+    try {
+      final response = await _client
+          .get(Uri.parse('$baseUrl$path'))
+          .timeout(_timeout);
+      return _decodeResponse(response);
+    } on http.ClientException {
+      throw ApiException('No se pudo conectar con el servidor.');
+    } on TimeoutException {
+      throw ApiException('El servidor tardo demasiado en responder.');
+    }
   }
 
   Future<dynamic> post(String path, Map<String, dynamic> body) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl$path'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(body),
-    );
-    return _decodeResponse(response);
+    try {
+      final response = await _client
+          .post(
+            Uri.parse('$baseUrl$path'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(body),
+          )
+          .timeout(_timeout);
+      return _decodeResponse(response);
+    } on http.ClientException {
+      throw ApiException('No se pudo conectar con el servidor.');
+    } on TimeoutException {
+      throw ApiException('El servidor tardo demasiado en responder.');
+    }
   }
 
   dynamic _decodeResponse(http.Response response) {
